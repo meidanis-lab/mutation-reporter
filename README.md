@@ -10,7 +10,7 @@ Install the `ncbi-blast+` package from your distribution. For that, open WSL ter
 
 To download our software, click the "Clone or download" button on the top right of this page and copy the URL. In the directory where you want to run the software, paste the URL after a `git clone` command.
 
-Change you working directory to the `2023-mutation` folder. Install the `python3-venv` package using the command `sudo apt install python3.10-venv`. If you get an error such as: 
+Change you working directory to the `mutation-reporter` folder. Install the `python3-venv` package using the command `sudo apt install python3.10-venv`. If you get an error such as: 
 ```
 This may mean that the package is missing, has been obsoleted, or is only available from another source
 ```
