@@ -4,5 +4,5 @@
 analysis=$1
 echo 'analysis: ' $analysis
 
-make -C CONFIG/ blastdb/$analysis.phr
+make -C blastdb $analysis.phr
 
