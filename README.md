@@ -20,7 +20,7 @@ Package 'python3.14-venv' has no installation candidate
 ```
 try to use `apt-get update` and `apt-get install python3-virtualenv` before running the command again.
 
-Create a Python virtual environment with the command `python3 -m venv venv` and activate the virtual environment using `source venv/bin/activate`. After that, run `pip install Bio` there. After installation, run `deactivate` to leave the virtual environment.
+Create a Python virtual environment with the command `python3 -m venv venv` and activate the virtual environment using `source venv/bin/activate`. After that, run `pip install -r requirements.txt` there. After installation, run `deactivate` to leave the virtual environment.
 
 # Configuration
 

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark" data-lang="pt">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mutation Reporter</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    /* ── Themes ──────────────────────────────────────── */
+    :root[data-theme="dark"] {
+      --bg: #0c111d;
+      --surface: #131b2e;
+      --surface2: #1a2540;
+      --border: #1f3050;
+      --accent: #00e5b0;
+      --accent2: #3d8ef0;
+      --warn: #f0a030;
+      --error: #f05050;
+      --success: #00c48c;
+      --text: #dde6f5;
+      --muted: #5a7090;
+      --tag-bg: #0e2a20;
+    }
+    :root[data-theme="light"] {
+      --bg: #f4f7fc;
+      --surface: #ffffff;
+      --surface2: #eef2f9;
+      --border: #d0daf0;
+      --accent: #008f72;
+      --accent2: #2563eb;
+      --warn: #b45309;
+      --error: #dc2626;
+      --success: #059669;
+      --text: #1a2540;
+      --muted: #6b7fa3;
+      --tag-bg: #dcf5ee;
+    }
+
+    /* ── Reset ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ── Header ──────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      height: 60px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 14px; }
+
+    /* Logo SVG */
+    .logo-wrap { display: flex; align-items: center; }
+    .logo-wrap svg { width: 38px; height: 38px; }
+
+    .header-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+    }
+    .header-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 300;
+      margin-top: 1px;
+    }
+
+    /* Header controls */
+    .header-controls { display: flex; align-items: center; gap: 10px; }
+    .ctrl-btn {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Layout ──────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 370px 1fr;
+      min-height: calc(100vh - 60px);
+    }
+
+    .left-panel {
+      border-right: 1px solid var(--border);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+    }
+    .right-panel {
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      overflow-y: auto;
+    }
+
+    /* ── Section label ───────────────────────────────── */
+    .sec-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    /* ── Card ────────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    /* ── Mode toggle ─────────────────────────────────── */
+    .mode-toggle {
+      display: flex;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 9px 0;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .mode-btn.active { background: var(--accent); color: #0c111d; font-weight: 600; }
+
+    /* ── Form fields ─────────────────────────────────── */
+    .field { margin-bottom: 12px; }
+    .field:last-child { margin-bottom: 0; }
+
+    .field-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .field-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    /* Tooltip (?) button */
+    .tip-btn {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+    .tip-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .tooltip {
+      position: absolute;
+      left: 22px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: 240px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text);
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+      z-index: 200;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+    .tip-btn:hover .tooltip,
+    .tip-btn:focus .tooltip { display: block; }
+
+    select, input[type="text"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 13px;
+      padding: 8px 11px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input[type="text"]:focus { border-color: var(--accent); }
+
+    /* Custom file input */
+    .file-input-wrap {
+      position: relative;
+    }
+    .file-input-wrap input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+    }
+    .file-display {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 11px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      min-height: 36px;
+    }
+    .file-display:hover { border-color: var(--accent); }
+    .file-display.has-file { border-color: var(--success); }
+    .file-display .file-icon { color: var(--muted); font-size: 14px; flex-shrink: 0; }
+    .file-display .file-name { color: var(--muted); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-display.has-file .file-name { color: var(--success); font-style: normal; font-weight: 500; }
+    .file-display .file-badge {
+      margin-left: auto;
+      background: var(--success);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      display: none;
+    }
+    .file-display.has-file .file-badge { display: block; }
+
+    .params-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Tooltip left-side variant for right-column items */
+    .tip-btn.tip-left .tooltip {
+      left: auto;
+      right: 22px;
+    }
+
+    /* FASTA preview */
+    .fasta-box {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px;
+      max-height: 90px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+
+    /* Params readonly */
+    .params-readonly {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .param-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px;
+    }
+    .param-chip-key {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .param-chip-val {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    /* FASTQ row — stacked so R2 is never cut off */
+    .fastq-row { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── Run button ───────────────────────────────────── */
+    .run-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #0c111d;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .run-btn:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+    .run-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── Status ───────────────────────────────────────── */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .dot.running { background: var(--warn); animation: blink 1s infinite; }
+    .dot.success { background: var(--success); }
+    .dot.error   { background: var(--error); }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    .status-text { font-size: 13px; font-weight: 500; }
+
+    .log-box {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      min-height: 120px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .log-line { line-height: 1.55; }
+    .log-line.info    { color: var(--muted); }
+    .log-line.success { color: var(--success); }
+    .log-line.warn    { color: var(--warn); }
+    .log-line.error   { color: var(--error); }
+
+    /* ── Results ──────────────────────────────────────── */
+    .results-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .export-btn {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--accent2);
+      color: var(--accent2);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .export-btn.show { display: inline-flex; }
+    .export-btn:hover { background: var(--accent2); color: #fff; }
+
+    .table-wrap {
+      display: none;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .table-wrap.show { display: block; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: var(--surface2);
+      padding: 9px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+    tbody td {
+      padding: 8px 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 36px; margin-bottom: 10px; opacity: 0.5; }
+    .empty-state p { font-size: 13px; }
+
+    /* ── Hidden ───────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Scrollbar ────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ════════ HEADER ════════ -->
+<header>
+  <div class="header-left">
+    <!-- Logo DNA helix SVG -->
+    <div class="logo-wrap">
+      <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="38" height="38" rx="9" fill="var(--accent)" opacity="0.15"/>
+        <text x="19" y="25" text-anchor="middle" font-family="IBM Plex Mono" font-size="17" font-weight="700" fill="var(--accent)">μ</text>
+        <!-- small helix lines -->
+        <line x1="7" y1="11" x2="31" y2="11" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.5"/>
+        <line x1="7" y1="27" x2="31" y2="27" stroke="var(--accent)" stroke-width="1.2" stroke-dasharray="3 2" opacity="0.5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="header-title">MUTATION REPORTER</div>
+      <div class="header-sub" id="h-sub">Pipeline bioinformático · BLAST · Detecção de variantes</div>
+    </div>
+  </div>
+
+  <div class="header-controls">
+    <button class="ctrl-btn" onclick="toggleLang()" id="lang-btn">🌐 English</button>
+    <button class="ctrl-btn" onclick="toggleTheme()" id="theme-btn">☀️ <span id="theme-label">Fundo claro</span></button>
+  </div>
+</header>
+
+<!-- ════════ LAYOUT ════════ -->
+<div class="layout">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="left-panel">
+
+    <!-- Analysis mode -->
+    <div>
+      <div class="sec-label" data-i18n="analysis">Análise</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-existing" onclick="setMode('existing')" data-i18n="reuse">↩ Reutilizar</button>
+        <button class="mode-btn" id="btn-new" onclick="setMode('new')" data-i18n="newanalysis">＋ Nova análise</button>
+      </div>
+    </div>
+
+    <!-- Existing analysis -->
+    <div id="section-existing">
+      <div class="card">
+        <div class="field">
+          <div class="field-row"><span class="field-label" data-i18n="existing_analysis">Análise existente</span></div>
+          <select id="analysis_existing" onchange="loadAnalysis()">
+            {% for a in analyses %}
+              <option value="{{ a }}">{{ a }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div id="fasta-preview-wrap" class="field hidden">
+          <div class="field-row"><span class="field-label" data-i18n="fasta_preview">Prévia FASTA</span></div>
+          <div class="fasta-box" id="fasta_preview"></div>
+        </div>
+        <div id="params-display" class="hidden">
+          <div class="field-row" style="margin-top:12px;"><span class="field-label" data-i18n="loaded_params">Parâmetros carregados</span></div>
+          <div class="params-readonly" id="params-read"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- New analysis -->
+    <div id="section-new" class="hidden">
+      <div class="card">
+        <div class="field">
+          <div class="field-row"><span class="field-label" data-i18n="analysis_name">Nome da análise</span></div>
+          <input type="text" id="analysis_new" placeholder="ex: ABL1" style="margin-bottom:4px;">
+          <div style="font-size:10px; color:var(--muted);" data-i18n="name_hint">Somente letras, números, hífen (-) e underscore (_)</div>
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="field-label" data-i18n="fasta_ref">Arquivo FASTA (referência)</span></div>
+          <div class="file-input-wrap">
+            <input type="file" id="fasta" accept=".fasta,.fa,.fna" onchange="updateFileLabel(this,'fasta-label')">
+            <div class="file-display" id="fasta-label">
+              <span class="file-icon">📂</span>
+              <span class="file-name" data-i18n="no_file">Nenhum arquivo selecionado</span>
+              <span class="file-badge">OK</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameters with tooltips -->
+        <div style="margin-top:14px;">
+          <div class="field-row"><span class="field-label" data-i18n="blast_params">Parâmetros BLAST</span></div>
+          <div class="params-grid">
+
+            <div class="field">
+              <div class="field-row">
+                <span class="field-label">E-value</span>
+                <span class="tip-btn" tabindex="0">?
+                  <span class="tooltip" data-i18n="tip_evalue">Valor máximo de E-value aceito pelo BLAST. Define a significância estatística do alinhamento — valores menores (ex: 1e-5) são mais estritos e reduzem falsos positivos.</span>
+                </span>
+              </div>
+              <input type="text" id="evalue" value="1e-5">
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <span class="field-label" data-i18n="min_len_label">Min. comprimento</span>
+                <span class="tip-btn tip-left" tabindex="0">?
+                  <span class="tooltip" data-i18n="tip_min_len">Número mínimo de aminoácidos no alinhamento. Para reads de 150 bp, recomenda-se ~49 aa (≈ 1/3 do read traduzido), filtrando alinhamentos curtos e pouco confiáveis.</span>
+                </span>
+              </div>
+              <input type="text" id="min_len" value="49">
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <span class="field-label" data-i18n="identity_label">% identidade</span>
+                <span class="tip-btn" tabindex="0">?
+                  <span class="tooltip" data-i18n="tip_identity">Percentual mínimo de identidade entre a sequência query e a referência proteica. Valor padrão de 90% garante qualidade do alinhamento sem excluir variantes reais.</span>
+                </span>
+              </div>
+              <input type="text" id="identity" value="90">
+            </div>
+
+            <div class="field">
+              <div class="field-row">
+                <span class="field-label" data-i18n="depth_label">Min. profundidade</span>
+                <span class="tip-btn tip-left" tabindex="0">?
+                  <span class="tooltip" data-i18n="tip_depth">Número mínimo de reads cobrindo uma posição para que a mutação seja reportada. Amplicon sequencing tipicamente tem alta cobertura (≥500 reads); experimentos de menor cobertura podem exigir valor menor.</span>
+                </span>
+              </div>
+              <input type="text" id="depth" value="500">
+            </div>
+
+            <div class="field" style="grid-column: span 2;">
+              <div class="field-row">
+                <span class="field-label">Min. VAF (%)</span>
+                <span class="tip-btn" tabindex="0">?
+                  <span class="tooltip" data-i18n="tip_vaf">Frequência Alélica Variante mínima (%) para reportar a mutação. VAF = reads mutantes / total de reads na posição × 100. Valor de 3% filtra ruído de sequenciamento sem ocultar variantes clonais de baixa frequência.</span>
+                </span>
+              </div>
+              <input type="text" id="vaf" value="3">
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FASTQ Upload -->
+    <div>
+      <div class="sec-label" data-i18n="samples">Amostras</div>
+      <div class="card">
+        <div class="fastq-row">
+          <div class="field">
+            <div class="field-row"><span class="field-label">FASTQ R1</span></div>
+            <div class="file-input-wrap">
+              <input type="file" id="fastq_r1" accept=".fastq.gz,.fastq" onchange="updateFileLabel(this,'r1-label')">
+              <div class="file-display" id="r1-label">
+                <span class="file-icon">🧬</span>
+                <span class="file-name" data-i18n="no_file">Nenhum arquivo</span>
+                <span class="file-badge">R1</span>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="field-row">
+              <span class="field-label">FASTQ R2</span>
+              <span style="font-size:10px; color:var(--muted); font-weight:400;" data-i18n="optional">(opcional)</span>
+            </div>
+            <div class="file-input-wrap">
+              <input type="file" id="fastq_r2" accept=".fastq.gz,.fastq" onchange="updateFileLabel(this,'r2-label')">
+              <div class="file-display" id="r2-label">
+                <span class="file-icon">🧬</span>
+                <span class="file-name" data-i18n="no_file_r2">Nenhum arquivo (só R1)</span>
+                <span class="file-badge">R2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="run-btn" id="run-btn" onclick="runPipeline()" data-i18n="run_btn">▶ RODAR ANÁLISE</button>
+
+  </div><!-- /left-panel -->
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="right-panel">
+
+    <!-- Status -->
+    <div>
+      <div class="sec-label" data-i18n="status">Status</div>
+      <div class="card" style="padding:14px 18px;">
+        <div class="status-row">
+          <div class="dot" id="status-dot"></div>
+          <span class="status-text" id="status-text" data-i18n="waiting">Aguardando execução</span>
+        </div>
+        <div class="log-box" id="log-box">
+          <span class="log-line info" data-i18n="log_placeholder">Os logs do pipeline aparecerão aqui em tempo real...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div>
+      <div class="results-bar">
+        <div class="sec-label" style="margin-bottom:0;" data-i18n="result">Resultado</div>
+        <button class="export-btn" id="export-btn" onclick="exportCSV()">
+          ⬇ <span data-i18n="export_csv">Exportar CSV</span>
+        </button>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="icon">🔬</div>
+        <p data-i18n="empty_msg">Rode uma análise para ver as variantes encontradas</p>
+      </div>
+
+      <!-- Single mutations table -->
+      <div class="table-wrap" id="table-wrap-single">
+        <table>
+          <thead id="result-thead-single"></thead>
+          <tbody id="result-tbody-single"></tbody>
+        </table>
+      </div>
+
+      <!-- Compound mutations table -->
+      <div id="compound-section" style="display:none; margin-top:20px;">
+        <div class="sec-label" style="margin-bottom:10px;" data-i18n="compound_label">Mutações Compostas</div>
+        <div class="table-wrap show">
+          <table>
+            <thead id="result-thead-compound"></thead>
+            <tbody id="result-tbody-compound"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /right-panel -->
+
+</div><!-- /layout -->
+
+<script>
+// ════════════════════════════════════════
+// i18n strings
+// ════════════════════════════════════════
+const i18n = {
+  pt: {
+    analysis: "Análise",
+    reuse: "↩ Reutilizar",
+    newanalysis: "＋ Nova análise",
+    existing_analysis: "Análise existente",
+    fasta_preview: "Prévia FASTA",
+    loaded_params: "Parâmetros carregados",
+    analysis_name: "Nome da análise",
+    fasta_ref: "Arquivo FASTA (referência)",
+    no_file: "Nenhum arquivo selecionado",
+    blast_params: "Parâmetros BLAST",
+    min_len_label: "Min. comprimento",
+    identity_label: "% identidade",
+    depth_label: "Min. profundidade",
+    samples: "Amostras",
+    run_btn: "▶ RODAR ANÁLISE",
+    status: "Status",
+    waiting: "Aguardando execução",
+    log_placeholder: "Os logs do pipeline aparecerão aqui em tempo real...",
+    result: "Resultado",
+    export_csv: "Exportar CSV",
+    empty_msg: "Rode uma análise para ver as variantes encontradas",
+    h_sub: "Pipeline bioinformático · BLAST · Detecção de variantes",
+    tip_evalue: "Valor máximo de E-value aceito pelo BLAST. Define a significância estatística do alinhamento — valores menores (ex: 1e-5) são mais estritos e reduzem falsos positivos.",
+    tip_min_len: "Número mínimo de aminoácidos no alinhamento. Para reads de 150 bp, recomenda-se ~49 aa (≈ 1/3 do read traduzido), filtrando alinhamentos curtos e pouco confiáveis.",
+    tip_identity: "Percentual mínimo de identidade entre a sequência query e a referência proteica. Valor padrão de 90% garante qualidade do alinhamento sem excluir variantes reais.",
+    tip_depth: "Número mínimo de reads cobrindo uma posição para que a mutação seja reportada. Amplicon sequencing tipicamente tem alta cobertura (≥500 reads); experimentos de menor cobertura podem exigir valor menor.",
+    tip_vaf: "Frequência Alélica Variante mínima (%) para reportar a mutação. VAF = reads mutantes / total de reads na posição × 100. Valor de 3% filtra ruído de sequenciamento sem ocultar variantes clonais de baixa frequência.",
+    lang_btn: "🌐 English",
+    theme_light: "Fundo claro",
+    theme_dark: "Fundo escuro",
+    no_file_short: "Nenhum arquivo",
+    compound_label: "Mutações Compostas",
+    name_hint: "Somente letras, números, hífen (-) e underscore (_)",
+    optional: "(opcional)",
+    no_file_r2: "Nenhum arquivo (só R1)",
+  },
+  en: {
+    analysis: "Analysis",
+    reuse: "↩ Reuse",
+    newanalysis: "＋ New analysis",
+    existing_analysis: "Existing analysis",
+    fasta_preview: "FASTA preview",
+    loaded_params: "Loaded parameters",
+    analysis_name: "Analysis name",
+    fasta_ref: "FASTA file (reference)",
+    no_file: "No file selected",
+    blast_params: "BLAST parameters",
+    min_len_label: "Min. align length",
+    identity_label: "% identity",
+    depth_label: "Min. depth",
+    samples: "Samples",
+    run_btn: "▶ RUN ANALYSIS",
+    status: "Status",
+    waiting: "Waiting for execution",
+    log_placeholder: "Pipeline logs will appear here in real time...",
+    result: "Result",
+    export_csv: "Export CSV",
+    empty_msg: "Run an analysis to see the variants found",
+    h_sub: "Bioinformatics pipeline · BLAST · Variant detection",
+    tip_evalue: "Maximum E-value accepted by BLAST. Defines statistical significance — lower values (e.g., 1e-5) are stricter and reduce false positives.",
+    tip_min_len: "Minimum number of amino acids in the alignment. For 150 bp reads, ~49 aa is recommended (≈ 1/3 of the translated read), filtering short, unreliable alignments.",
+    tip_identity: "Minimum percent identity between the query and protein reference. Default of 90% ensures alignment quality without excluding real variants.",
+    tip_depth: "Minimum number of reads covering a position for a mutation to be reported. Amplicon sequencing typically yields high coverage (≥500 reads); lower-depth experiments may require a lower value.",
+    tip_vaf: "Minimum Variant Allele Frequency (%) to report a mutation. VAF = mutant reads / total reads at position × 100. A value of 3% filters sequencing noise without hiding low-frequency clonal variants.",
+    lang_btn: "🌐 Português",
+    theme_light: "Light theme",
+    theme_dark: "Dark theme",
+    no_file_short: "No file",
+    compound_label: "Compound Mutations",
+    name_hint: "Only letters, numbers, hyphens (-) and underscores (_)",
+    optional: "(optional)",
+    no_file_r2: "No file (R1 only)",
+  }
+};
+
+let currentLang = 'pt';
+let currentTheme = 'dark';
+let currentMode = 'existing';
+let currentJobId = null;
+
+// ── Language ──────────────────────────────────────────
+function applyLang() {
+  const t = i18n[currentLang];
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key] !== undefined) el.textContent = t[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = key; // already the literal placeholder value
+  });
+  document.getElementById('h-sub').textContent = t.h_sub;
+  document.getElementById('lang-btn').textContent = t.lang_btn;
+  document.getElementById('theme-label').textContent =
+    currentTheme === 'dark' ? t.theme_light : t.theme_dark;
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'pt' ? 'en' : 'pt';
+  applyLang();
+}
+
+// ── Theme ─────────────────────────────────────────────
+function toggleTheme() {
+  currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  applyLang(); // re-render theme label
+}
+
+// ── Mode toggle ───────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('btn-existing').classList.toggle('active', mode === 'existing');
+  document.getElementById('btn-new').classList.toggle('active', mode === 'new');
+  document.getElementById('section-existing').classList.toggle('hidden', mode !== 'existing');
+  document.getElementById('section-new').classList.toggle('hidden', mode !== 'new');
+}
+
+// ── File label update ─────────────────────────────────
+function updateFileLabel(input, labelId) {
+  const wrap = document.getElementById(labelId);
+  const nameEl = wrap.querySelector('.file-name');
+  if (input.files && input.files[0]) {
+    nameEl.textContent = input.files[0].name;
+    wrap.classList.add('has-file');
+  } else {
+    nameEl.textContent = i18n[currentLang].no_file;
+    wrap.classList.remove('has-file');
+  }
+}
+
+// ── Load existing analysis ────────────────────────────
+function loadAnalysis() {
+  const name = document.getElementById('analysis_existing').value;
+  if (!name) return;
+  fetch(`/get_analysis/${encodeURIComponent(name)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return;
+      const preview = document.getElementById('fasta_preview');
+      const previewWrap = document.getElementById('fasta-preview-wrap');
+      if (data.fasta) {
+        preview.textContent = data.fasta;
+        previewWrap.classList.remove('hidden');
+      } else {
+        previewWrap.classList.add('hidden');
+      }
+      const paramsRead = document.getElementById('params-read');
+      const paramsDisplay = document.getElementById('params-display');
+      if (data.params && Object.keys(data.params).length > 0) {
+        const labels = {
+          MAX_E_VALUE: 'E-value', MIN_ALIGN_LEN: 'Min. length',
+          MIN_PERC_IDENT: '% identity', MIN_DEPTH: 'Min. depth', MIN_VAF: 'Min. VAF (%)'
+        };
+        paramsRead.innerHTML = Object.entries(data.params).map(([k, v]) => `
+          <div class="param-chip">
+            <div class="param-chip-key">${labels[k] || k}</div>
+            <div class="param-chip-val">${v}</div>
+          </div>`).join('');
+        paramsDisplay.classList.remove('hidden');
+      } else {
+        paramsDisplay.classList.add('hidden');
+      }
+    });
+}
+
+// ── Run pipeline ──────────────────────────────────────
+function runPipeline() {
+  const r1 = document.getElementById('fastq_r1').files[0];
+  const r2 = document.getElementById('fastq_r2').files[0]; // optional
+  if (!r1) { alert(currentLang === 'pt' ? 'Selecione o arquivo FASTQ R1.' : 'Please select the FASTQ R1 file.'); return; }
+
+  const formData = new FormData();
+  formData.append('fastq_r1', r1);
+  if (r2) formData.append('fastq_r2', r2); // only send if provided
+  formData.append('create_new', currentMode === 'new' ? 'true' : 'false');
+
+  if (currentMode === 'new') {
+    const name = document.getElementById('analysis_new').value.trim();
+    const fasta = document.getElementById('fasta').files[0];
+    if (!name) { alert(currentLang === 'pt' ? 'Informe o nome da análise.' : 'Enter the analysis name.'); return; }
+    if (!/^[A-Za-z0-9_\-]+$/.test(name)) {
+      alert(currentLang === 'pt'
+        ? 'Nome da análise inválido. Use apenas letras, números, hífens (-) e underscores (_). Evite espaços e acentos.'
+        : 'Invalid analysis name. Use only letters, numbers, hyphens (-) and underscores (_). Avoid spaces and accents.');
+      return;
+    }
+    if (!fasta) { alert(currentLang === 'pt' ? 'Selecione um arquivo FASTA.' : 'Select a FASTA file.'); return; }
+    formData.append('analysis_new', name);
+    formData.append('fasta', fasta);
+    formData.append('evalue', document.getElementById('evalue').value);
+    formData.append('min_len', document.getElementById('min_len').value);
+    formData.append('identity', document.getElementById('identity').value);
+    formData.append('depth', document.getElementById('depth').value);
+    formData.append('vaf', document.getElementById('vaf').value);
+  } else {
+    formData.append('analysis_existing', document.getElementById('analysis_existing').value);
+  }
+
+  setStatus('running', currentLang === 'pt' ? 'Iniciando pipeline...' : 'Starting pipeline...');
+  clearLog();
+  hideResults();
+  document.getElementById('run-btn').disabled = true;
+  document.getElementById('export-btn').classList.remove('show');
+
+  fetch('/run', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) {
+        setStatus('error', data.error);
+        appendLog(data.error, 'error');
+        document.getElementById('run-btn').disabled = false;
+        return;
+      }
+      currentJobId = data.job_id;
+      streamStatus(data.job_id);
+    })
+    .catch(err => {
+      setStatus('error', 'Server error');
+      appendLog(String(err), 'error');
+      document.getElementById('run-btn').disabled = false;
+    });
+}
+
+// ── SSE streaming ─────────────────────────────────────
+function streamStatus(jobId) {
+  const evtSource = new EventSource(`/status/${jobId}`);
+  evtSource.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    if (data.type === 'log') {
+      appendLog(data.msg, data.level || 'info');
+      setStatus('running', currentLang === 'pt' ? 'Rodando pipeline...' : 'Running pipeline...');
+    }
+    if (data.type === 'done') {
+      evtSource.close();
+      document.getElementById('run-btn').disabled = false;
+      if (data.success) {
+        const msg = currentLang === 'pt'
+          ? `Concluído — ${data.count ?? 0} variante(s) encontrada(s)`
+          : `Done — ${data.count ?? 0} variant(s) found`;
+        setStatus('success', msg);
+        if (data.rows && data.rows.length > 0) {
+          renderTable(data.rows);
+          document.getElementById('export-btn').classList.add('show');
+        } else {
+          appendLog(
+            currentLang === 'pt' ? 'Nenhuma mutação encontrada ou arquivo .mut vazio.' : 'No mutations found or empty .mut file.',
+            'warn'
+          );
+        }
+      } else {
+        setStatus('error', currentLang === 'pt' ? 'Erro no pipeline' : 'Pipeline error');
+      }
+    }
+  };
+  evtSource.onerror = () => {
+    evtSource.close();
+    setStatus('error', currentLang === 'pt' ? 'Conexão perdida' : 'Connection lost');
+    document.getElementById('run-btn').disabled = false;
+  };
+}
+
+// ── Table ─────────────────────────────────────────────
+// rows can be a flat array (all single) or an object {single: [...], compound: [...]}
+function renderTable(rows) {
+  // Detect if server sent split sections
+  let single = rows, compound = [];
+  if (rows && !Array.isArray(rows) && rows.single) {
+    single = rows.single;
+    compound = rows.compound || [];
+  } else if (Array.isArray(rows)) {
+    // Try to detect compound section by checking if any row has 'Prot Mut 1' or 'Prot Mut 2'
+    const compoundIdx = rows.findIndex(r =>
+      Object.keys(r).some(k => k.toLowerCase().includes('prot mut 1') || k.toLowerCase().includes('prot mut 2'))
+    );
+    if (compoundIdx > 0) {
+      single   = rows.slice(0, compoundIdx);
+      compound = rows.slice(compoundIdx);
+    } else if (compoundIdx === 0) {
+      single   = [];
+      compound = rows;
+    }
+  }
+
+  document.getElementById('empty-state').classList.add('hidden');
+
+  // Render single mutations
+  if (single.length > 0) {
+    const cols = Object.keys(single[0]);
+    document.getElementById('result-thead-single').innerHTML =
+      '<tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr>';
+    document.getElementById('result-tbody-single').innerHTML = single.map(row =>
+      '<tr>' + cols.map(c => `<td>${row[c] ?? ''}</td>`).join('') + '</tr>'
+    ).join('');
+    document.getElementById('table-wrap-single').classList.add('show');
+  }
+
+  // Render compound mutations
+  if (compound.length > 0) {
+    const cols2 = Object.keys(compound[0]);
+    document.getElementById('result-thead-compound').innerHTML =
+      '<tr>' + cols2.map(c => `<th>${c}</th>`).join('') + '</tr>';
+    document.getElementById('result-tbody-compound').innerHTML = compound.map(row =>
+      '<tr>' + cols2.map(c => `<td>${row[c] ?? ''}</td>`).join('') + '</tr>'
+    ).join('');
+    document.getElementById('compound-section').style.display = 'block';
+  }
+}
+
+function hideResults() {
+  document.getElementById('empty-state').classList.remove('hidden');
+  document.getElementById('table-wrap-single').classList.remove('show');
+  document.getElementById('compound-section').style.display = 'none';
+}
+
+// ── Log helpers ───────────────────────────────────────
+function clearLog() {
+  document.getElementById('log-box').innerHTML = '';
+}
+function appendLog(msg, level = 'info') {
+  const box = document.getElementById('log-box');
+  const el = document.createElement('div');
+  el.className = `log-line ${level}`;
+  el.textContent = msg;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+function setStatus(state, text) {
+  document.getElementById('status-dot').className = 'dot ' + state;
+  document.getElementById('status-text').textContent = text;
+}
+
+// ── CSV export ────────────────────────────────────────
+function exportCSV() {
+  if (!currentJobId) return;
+  window.location.href = `/export/${currentJobId}`;
+}
+
+// ── Init ──────────────────────────────────────────────
+window.onload = () => {
+  applyLang();
+  const sel = document.getElementById('analysis_existing');
+  if (sel && sel.value) loadAnalysis();
+};
+</script>
+</body>
+</html>
