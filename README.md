@@ -22,7 +22,19 @@ try to use `apt-get update` and `apt-get install python3-virtualenv` before runn
 
 Create a Python virtual environment with the command `python3 -m venv venv` and activate the virtual environment using `source venv/bin/activate`. After that, run `pip install -r requirements.txt`. After installation, run `deactivate` to leave the virtual environment.
 
-# Configuration
+# Graphical User Interface
+
+The best way to use this software is through its Graphical User Interface.  To start it, just activate the virtual environment and run
+
+```
+python app.py
+```
+
+It will show you the URLs that you can use to access the system.  For information on the various fields that appear in the GUI, as well as for example files that you can get from the internet, please refer to the Command Line instructions below.
+
+# Command Line
+
+## Configuration
 
 Define an *analysis*. You must give it a name starting with a letter and using just letters, numbers, and hyphens, without whitespace or other special characters. Create a subdirectory of CONFIG with the *analysis* name. For example:
 
