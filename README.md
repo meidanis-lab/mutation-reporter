@@ -1,4 +1,4 @@
-# How to use the Mutation Pipeline
+# How to use the Mutation Report Pipeline
 
 This mutation pipeline uses BLAST to produce mutation reports. It is designed to run on Linux, but one can run it on Windows using git bash or Windows Subsystem for Linux (WSL).
 
