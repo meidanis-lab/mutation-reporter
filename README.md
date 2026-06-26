@@ -50,7 +50,7 @@ After that, run
 ./database.bash analysis
 ```
 
-This will create the BLAST database with the correct analysis name in `CONFIG/blastdb`. 
+This will create the BLAST database with the correct analysis name in `blastdb`. 
 
 ![database](img/database.png)
 
@@ -74,7 +74,7 @@ MIN_VAF := 2
 
 Of course, you are free to change the above values in your configuration. Each analysis has its own parameters.
 
-# Execution
+## Execution
 
 Create a subdiretory `00-fastq` and copy `.fastq.gz` files into it, both R1 and R2 files.  We have prepared two such files that can be downloaded from Zenodo: [R1](https://zenodo.org/records/10992331/files/Sample1_L001_R1_001.fastq.gz?download=1) and [R2](https://zenodo.org/records/10992331/files/Sample1_L001_R2_001.fastq.gz?download=1).
 
